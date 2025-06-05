@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Invoice - SMEC</title>
+  <title>Invoice/Quotation - SMEC</title>
   <style>
     body {
       font-family: 'Helvetica', Arial, sans-serif;
       padding: 0;
       margin: 0;
       background: #fff;
+      color: #000;
     }
 
     .invoice-box {
-      width: 190mm; /* A4 width minus 10mm margins */
+      width: 190mm;
       margin: 10mm auto;
       padding: 10mm;
       background: #fff;
@@ -37,18 +38,18 @@
     header h2 {
       margin: 8px 0;
       font-size: 22px;
-      color: #333;
+      color: #000;
     }
 
     header h3 {
       font-size: 16px;
       margin: 5px 0;
-      color: #444;
+      color: #000;
     }
 
     header p {
       font-size: 11px;
-      color: #555;
+      color: #000;
       margin: 4px 0;
     }
 
@@ -67,38 +68,43 @@
     }
 
     table th {
-      background-color: #e9ecef;
+      background-color: #d0d0d0;
       font-weight: bold;
     }
 
     .items th, .tax-summary th {
-      background-color: #e9ecef;
+      background-color: #d0d0d0;
     }
 
     [contenteditable="true"] {
-      border: 1px dashed #aaa;
+      border: 1px dashed #666;
       padding: 2px;
       cursor: text;
     }
 
     [contenteditable="true"]:hover {
-      background: #f8f8f8;
+      background: #f0f0f0;
     }
 
-    button.add-item, button.download-pdf {
+    button.add-item, button.download-pdf, select#document-type, label.gst-toggle {
       display: block;
       margin: 10px auto;
       padding: 8px 16px;
-      background: #007bff;
+      background: #666;
       color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
+      text-align: center;
     }
 
-    button.add-item:hover, button.download-pdf:hover {
-      background: #0056b3;
+    button.add-item:hover, button.download-pdf:hover, select#document-type:hover {
+      background: #555;
+    }
+
+    label.gst-toggle input {
+      margin-right: 5px;
     }
 
     .totals {
@@ -120,7 +126,7 @@
       font-size: 11px;
       border: 1.5px solid #333;
       padding: 8px;
-      background: #f9f9f9;
+      background: #f0f0f0;
     }
 
     .bank-details p {
@@ -154,12 +160,18 @@
       font-size: 11px;
     }
 
+    .hidden {
+      display: none;
+    }
+
     @media print {
       body {
         padding: 0;
         margin: 0;
         width: 210mm;
         height: 297mm;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .invoice-box {
         border: none !important;
@@ -168,7 +180,7 @@
         margin: 10mm auto;
         padding: 10mm;
       }
-      button.add-item, button.download-pdf {
+      button.add-item, button.download-pdf, select#document-type, label.gst-toggle {
         display: none !important;
       }
       [contenteditable="true"] {
@@ -189,47 +201,78 @@
         page-break-inside: avoid;
         page-break-after: auto;
       }
+      header h2, header h3, header p, .totals p, .totals h3, .terms-sign, .bank-details p, .party span {
+        color: #000 !important;
+      }
+      table th {
+        background-color: #d0d0d0 !important;
+      }
+      .bank-details {
+        background: #f0f0f0 !important;
+      }
     }
   </style>
 </head>
 <body>
+  <select id="document-type" onchange="toggleDocumentType()">
+    <option value="invoice" selected>Invoice</option>
+    <option value="quotation">Quotation</option>
+  </select>
+
+  <label id="gst-toggle-label" class="gst-toggle hidden">
+    <input type="checkbox" id="gst-toggle" checked onchange="calculateQuotationTotals()">
+    Include GST (18%)
+  </label>
+
   <div class="invoice-box" id="invoice">
     <header>
       <div class="gst-line">
         <span><strong>GSTIN:</strong> 29HTKPK5803F1ZE</span>
         <span class="copy-type">Original Copy (Buyer)</span>
       </div>
-      <h2 class="title">TAX INVOICE</h2>
+      <h2 class="title" id="document-title">TAX INVOICE</h2>
       <h3>SRI MANJUNATHA ELECTRICAL & CONTROLS</h3>
-      <p>NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
-      Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016</p>
+      <p id="company-details">
+        NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
+        Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
+      </p>
     </header>
 
-    <table class="meta">
-      <tr><th>Invoice No.</th><td contenteditable="true">SMEC/25-26/012</td><th>GR/RR No.</th><td contenteditable="true">-</td></tr>
+    <table class="meta" id="meta">
+      <tr>
+        <th id="meta-no-label">Invoice No.</th>
+        <td contenteditable="true" id="meta-no-value">SMEC/25-26/012</td>
+        <th>GR/RR No.</th>
+        <td contenteditable="true">-</td>
+      </tr>
       <tr><th>Dated</th><td contenteditable="true">22-03-2025</td><th>Transport</th><td contenteditable="true">-</td></tr>
       <tr><th>Place of Supply</th><td contenteditable="true">BANGALORE</td><th>Station</th><td contenteditable="true">-</td></tr>
       <tr><th>Reverse Charge</th><td contenteditable="true">N</td><td></td><td></td></tr>
     </table>
 
-    <div class="parties">
+    <div class="parties" id="parties">
       <div class="party">
         <strong>Billed to:</strong><br>
-        <span contenteditable="true">NAMBIAR BUILDERS PRIVATE LIMITED<br>
-        2ND FLOOR, P R BUILDING CENTRE, ABOVE CROMA OUTER RING ROAD, KADUBEESANAHALLI<br>
-        BENGALURU - 560037<br>
-        State: KARNATAKA | Pincode: 560037<br>
-        GSTIN / UIN: 29AADCN0664M1Z3</span>
+        <span contenteditable="true">
+          NAMBIAR BUILDERS PRIVATE LIMITED<br>
+          2ND FLOOR, P R BUILDING CENTRE, ABOVE CROMA OUTER RING ROAD, KADUBEESANAHALLI<br>
+          BENGALURU - 560037<br>
+          State: KARNATAKA | Pincode: 560037<br>
+          GSTIN / UIN: 29AADCN0664M1Z3
+        </span>
       </div>
       <div class="party">
         <strong>Shipped to:</strong><br>
-        <span contenteditable="true">NAMBIAR BELLEZEA, NARAYANAGHATTA VILLAGE, CHANDAPURA<br>
-        DODDABOMMASANDRA CIRCLE, NEAR MUTHANALLUR, BENGALURU - 560099<br>
-        State: KARNATAKA | Pincode: 560099<br>
-        GSTIN / UIN: -</span>
+        <span contenteditable="true">
+          NAMBIAR BELLEZEA, NARAYANAGHATTA VILLAGE, CHANDAPURA<br>
+          DODDABOMMASANDRA CIRCLE, NEAR MUTHANALLUR, BENGALURU - 560099<br>
+          State: KARNATAKA | Pincode: 560099<br>
+          GSTIN / UIN: -
+        </span>
       </div>
     </div>
 
+    <h4 id="price-offer" class="hidden" style="margin: 15px 0; font-size: 12px;">(I) Price Offer</h4>
     <table class="items" id="items">
       <thead>
         <tr>
@@ -259,7 +302,7 @@
     </table>
     <button class="add-item" onclick="addItem()">+ Add Item</button>
 
-    <div class="totals">
+    <div class="totals" id="totals">
       <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16340.00</span></p>
       <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2941.20</span></p>
       <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19281.20</span></h3>
@@ -272,16 +315,16 @@
       <tbody></tbody>
     </table>
 
-    <p><strong>Amount in Words:</strong> <span id="amount-in-words">Rupees Nineteen Thousand Two Hundred and Eighty One and Twenty Paise Only</span></p>
+    <p><strong id="amount-label">Amount in Words:</strong> <span id="amount-in-words">Rupees Nineteen Thousand Two Hundred and Eighty One and Twenty Paise Only</span></p>
 
-    <div class="bank-details">
+    <div class="bank-details" id="bank-details">
       <p><strong>Bank Details</strong></p>
       <p>Bank Name: Karnataka Bank</p>
       <p>Account Number: 0572000110296901</p>
       <p>IFSC Code: KARB0000057</p>
     </div>
 
-    <div class="terms-sign">
+    <div class="terms-sign" id="terms-sign">
       <div class="terms">
         <strong>Terms & Conditions</strong>
         <p>1. Goods once sold will not be taken back.<br>
@@ -303,7 +346,6 @@
   <script>
     const { jsPDF } = window.jspdf;
 
-    // Convert number to words (Indian numbering system)
     function numberToWords(num) {
       const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
                     'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
@@ -325,12 +367,11 @@
       return convert(num) + paise + ' Only';
     }
 
-    function calculateTotals() {
+    function calculateInvoiceTotals() {
       let subtotal = 0;
       const taxRates = {};
-      const GST_RATE = 0.18; // Fixed 18% GST
+      const GST_RATE = 0.18;
       
-      // Calculate item totals and collect tax rates
       document.querySelectorAll('#items tbody tr').forEach(row => {
         let qty = row.querySelector('.qty')?.innerText.trim();
         let rate = parseFloat(row.querySelector('.rate')?.innerText) || 0;
@@ -348,7 +389,6 @@
         taxRates[hsn].gst += amount * GST_RATE;
       });
 
-      // Update tax summary table
       const taxSummaryBody = document.querySelector('#tax-summary tbody');
       taxSummaryBody.innerHTML = '';
       let totalGST = 0;
@@ -373,14 +413,214 @@
       document.getElementById('amount-in-words').innerText = numberToWords(grandTotal);
     }
 
+    function calculateQuotationTotals() {
+      let subtotal = 0;
+      const GST_RATE = 0.18;
+      const includeGST = document.getElementById('gst-toggle').checked;
+
+      document.querySelectorAll('#items tbody tr').forEach(row => {
+        let qtyText = row.querySelector('.qty')?.innerText.trim();
+        let rate = parseFloat(row.querySelector('.rate')?.innerText) || 0;
+        
+        let qty = parseFloat(qtyText.replace(/[^\d.]/g, '')) || 1;
+        rate = isNaN(rate) ? 0 : rate;
+        
+        let amount = qty * rate;
+        row.querySelector('.amount').innerText = amount.toFixed(2);
+        subtotal += amount;
+      });
+
+      let totalGST = includeGST ? subtotal * GST_RATE : 0;
+      let grandTotal = subtotal + totalGST;
+
+      const totalsDiv = document.getElementById('totals');
+      if (includeGST) {
+        totalsDiv.innerHTML = `
+          <p><strong>Total:</strong> ₹ <span id="subtotal">${subtotal.toFixed(2)}</span></p>
+          <p><strong>GST @ 18%:</strong> ₹ <span id="gst">${totalGST.toFixed(2)}</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${grandTotal.toFixed(2)}</span></h3>
+        `;
+      } else {
+        totalsDiv.innerHTML = `
+          <p><strong>Total:</strong> ₹ <span id="subtotal">${subtotal.toFixed(2)}</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${grandTotal.toFixed(2)}</span></h3>
+        `;
+      }
+
+      document.getElementById('amount-in-words').innerText = numberToWords(grandTotal);
+    }
+
+    function toggleDocumentType() {
+      const docType = document.getElementById('document-type').value;
+      const title = document.getElementById('document-title');
+      const metaTable = document.getElementById('meta');
+      const partiesDiv = document.getElementById('parties');
+      const priceOfferHeader = document.getElementById('price-offer');
+      const itemsTable = document.getElementById('items');
+      const totalsDiv = document.getElementById('totals');
+      const taxSummary = document.getElementById('tax-summary');
+      const amountLabel = document.getElementById('amount-label');
+      const bankDetails = document.getElementById('bank-details');
+      const termsSignDiv = document.getElementById('terms-sign');
+      const companyDetails = document.getElementById('company-details');
+      const gstToggleLabel = document.getElementById('gst-toggle-label');
+
+      if (docType === 'quotation') {
+        title.innerText = 'QUOTATION';
+        companyDetails.innerHTML = `
+          (Mfg All Type Power Switch Boards, Control Panels & Bus ducts)<br>
+          No.9, 3rd Main Road, Kasturba Nagar, Near Mysore Road Tollgate, BENGALURU - 560026<br>
+          Email: srimanjunathaelectricalcontrol@gmail.com | Ph No: 9535982016
+        `;
+        metaTable.innerHTML = `
+          <tr>
+            <th>Quotation No.</th>
+            <td contenteditable="true" id="meta-no-value">SMEC/25-26/QUO/007</td>
+            <th>Date</th>
+            <td contenteditable="true">01.06.2025</td>
+          </tr>
+          <tr><th>Customer Name</th><td contenteditable="true">ELECTRIC TECH</td><th>Client Name</th><td contenteditable="true">R J JEWELLERS (NAMBIER)</td></tr>
+          <tr><th colspan="4" style="text-align: left; padding-left: 10px;" contenteditable="true">Dear Sir,<br>SUB: QUOTATION FOR METERING PANEL<br>We thank you for your enquiry and we have pleasure in submitting our offer towards above mentioned subject which requires your approval.</th></tr>
+        `;
+        partiesDiv.classList.add('hidden');
+        priceOfferHeader.classList.remove('hidden');
+        itemsTable.querySelector('thead tr').innerHTML = '<th>Sl No</th><th>Description</th><th>Qty Nos</th><th>Price (Rs)</th><th>Make</th><th>Total</th>';
+        itemsTable.querySelector('tbody').innerHTML = `
+          <tr>
+            <td>1</td>
+            <td contenteditable="true">ATS PANEL</td>
+            <td contenteditable="true" class="qty">1 NOS</td>
+            <td contenteditable="true" class="rate">96800.00</td>
+            <td contenteditable="true">-</td>
+            <td class="amount">96800.00</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td contenteditable="true">AMF PANEL</td>
+            <td contenteditable="true" class="qty">1 NOS</td>
+            <td contenteditable="true" class="rate">101000.00</td>
+            <td contenteditable="true">-</td>
+            <td class="amount">101000.00</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td contenteditable="true">DISTRIBUTION PANEL</td>
+            <td contenteditable="true" class="qty">1 NOS</td>
+            <td contenteditable="true" class="rate">49500.00</td>
+            <td contenteditable="true">-</td>
+            <td class="amount">49500.00</td>
+          </tr>
+        `;
+        totalsDiv.innerHTML = `
+          <p><strong>Total:</strong> ₹ <span id="subtotal">247300.00</span></p>
+          <p><strong>GST @ 18%:</strong> ₹ <span id="gst">44514.00</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">291814.00</span></h3>
+        `;
+        taxSummary.classList.add('hidden');
+        amountLabel.innerText = 'Estimated Amount in Words:';
+        bankDetails.classList.add('hidden');
+        termsSignDiv.innerHTML = `
+          <div class="terms">
+            <strong>Note: (II) TERMS & CONDITIONS</strong>
+            <p contenteditable="true">
+            a. Price Basis: Above prices are inclusive of all taxes & duties.<br>
+            b. Payment: 50% Advance.<br>
+            c. Transport: Extra<br>
+            d. Taxes & Duties: The Statutory levies rates given under are as applicable at present, however the rate applicable at the time of dispatch shall be applicable.<br>
+            a) GST @ 18% Includes.<br>
+            e. Validity: 15 days from today & thereafter subject to our confirmation.<br>
+            We hope you will find our offer acceptable and we look forward to the pleasure of receiving your valued order, which we assure you will receive our best & prompt attention.<br>
+            Thanking You, Sincerely Yours,
+            </p>
+          </div>
+          <div class="sign">
+            For SRI MANJUNATHA ELECTRICAL & CONTROLS<br><br>
+            <strong contenteditable="true">SHIVAKUMAR</strong><br>
+            <span contenteditable="true">9535982016</span>
+          </div>
+        `;
+        gstToggleLabel.classList.remove('hidden');
+        calculateQuotationTotals();
+      } else {
+        title.innerText = 'TAX INVOICE';
+        companyDetails.innerHTML = `
+          NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
+          Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
+        `;
+        metaTable.innerHTML = `
+          <tr>
+            <th>Invoice No.</th>
+            <td contenteditable="true" id="meta-no-value">SMEC/25-26/012</td>
+            <th>GR/RR No.</th>
+            <td contenteditable="true">-</td>
+          </tr>
+          <tr><th>Dated</th><td contenteditable="true">22-03-2025</td><th>Transport</th><td contenteditable="true">-</td></tr>
+          <tr><th>Place of Supply</th><td contenteditable="true">BANGALORE</td><th>Station</th><td contenteditable="true">-</td></tr>
+          <tr><th>Reverse Charge</th><td contenteditable="true">N</td><td></td><td></td></tr>
+        `;
+        partiesDiv.classList.remove('hidden');
+        priceOfferHeader.classList.add('hidden');
+        itemsTable.querySelector('thead tr').innerHTML = '<th>S.N.</th><th>Description of Goods</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Price</th><th>Amount</th>';
+        itemsTable.querySelector('tbody').innerHTML = `
+          <tr>
+            <td>1</td>
+            <td contenteditable="true">4 POLE CONTROCTOR</td>
+            <td contenteditable="true">8536</td>
+            <td contenteditable="true" class="qty">1</td>
+            <td contenteditable="true">NOS</td>
+            <td contenteditable="true" class="rate">13920.00</td>
+            <td class="amount">13920.00</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td contenteditable="true">ON DELAY TIMER</td>
+            <td contenteditable="true">8536</td>
+            <td contenteditable="true" class="qty">2</td>
+            <td contenteditable="true">NOS</td>
+            <td contenteditable="true" class="rate">1210.00</td>
+            <td class="amount">2420.00</td>
+          </tr>
+        `;
+        totalsDiv.innerHTML = `
+          <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16340.00</span></p>
+          <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2941.20</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19281.20</span></h3>
+        `;
+        taxSummary.classList.remove('hidden');
+        amountLabel.innerText = 'Amount in Words:';
+        bankDetails.classList.remove('hidden');
+        termsSignDiv.innerHTML = `
+          <div class="terms">
+            <strong>Terms & Conditions</strong>
+            <p>1. Goods once sold will not be taken back.<br>
+            2. Interest @ 18% p.a. will be charged if payment is late.<br>
+            3. Subject to Karnataka Jurisdiction only.</p>
+          </div>
+          <div class="sign">
+            Receiver's Signature:<br><br><br><br>
+            For SRI MANJUNATHA ELECTRICAL & CONTROLS<br>
+            <strong>Authorized Signatory</strong>
+          </div>
+        `;
+        gstToggleLabel.classList.add('hidden');
+        calculateInvoiceTotals();
+      }
+      document.querySelectorAll('.qty, .rate, .meta td[contenteditable]').forEach(cell =>
+        cell.addEventListener('input', () => {
+          if (docType === 'quotation') calculateQuotationTotals();
+          else calculateInvoiceTotals();
+        })
+      );
+    }
+
     function downloadPDF() {
-      calculateTotals();
+      const docType = document.getElementById('document-type').value;
+      if (docType === 'quotation') calculateQuotationTotals();
+      else calculateInvoiceTotals();
       
-      // Clone the invoice element
       const element = document.getElementById('invoice').cloneNode(true);
       
-      // Remove buttons and clean contenteditable
-      element.querySelectorAll('.add-item, .download-pdf').forEach(btn => btn.remove());
+      element.querySelectorAll('.add-item, .download-pdf, #document-type, #gst-toggle-label').forEach(el => el.remove());
       element.querySelectorAll('[contenteditable="true"]').forEach(el => {
         el.removeAttribute('contenteditable');
         el.style.border = 'none';
@@ -388,12 +628,12 @@
         el.style.padding = '2px';
       });
 
-      // Ensure table borders are applied
       element.querySelectorAll('table th, table td').forEach(el => {
         el.style.border = '1.5px solid #333';
       });
 
-      // Create a temporary container for rendering
+      const filename = docType === 'invoice' ? 'invoice.pdf' : 'quotation.pdf';
+
       const tempContainer = document.createElement('div');
       tempContainer.style.position = 'absolute';
       tempContainer.style.left = '-9999px';
@@ -403,11 +643,10 @@
       tempContainer.appendChild(element);
       document.body.appendChild(tempContainer);
 
-      // Render with html2canvas
       html2canvas(tempContainer, {
         scale: 2,
-        width: 794, // 190mm at 96 DPI
-        height: 1123, // 277mm (297mm - 20mm margins) at 96 DPI
+        width: 794,
+        height: 1123,
         useCORS: true,
         backgroundColor: '#fff'
       }).then(canvas => {
@@ -418,15 +657,12 @@
           format: 'a4'
         });
 
-        // Calculate image dimensions to fit A4 with margins
-        const imgWidth = 190; // 210mm - 10mm margins
+        const imgWidth = 190;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         pdf.addImage(imgData, 'JPEG', 10, 10, imgWidth, imgHeight);
 
-        // Save PDF
-        pdf.save('invoice.pdf');
+        pdf.save(filename);
 
-        // Clean up
         document.body.removeChild(tempContainer);
       }).catch(error => {
         console.error('PDF generation failed:', error);
@@ -436,28 +672,42 @@
     function addItem() {
       const tbody = document.querySelector('#items tbody');
       const rowCount = tbody.rows.length + 1;
+      const docType = document.getElementById('document-type').value;
       const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td>${rowCount}</td>
-        <td contenteditable="true">New Item</td>
-        <td contenteditable="true">HSN</td>
-        <td contenteditable="true" class="qty">1</td>
-        <td contenteditable="true">NOS</td>
-        <td contenteditable="true" class="rate">0</td>
-        <td class="amount">0.00</td>
-      `;
-      tbody.appendChild(newRow);
+      if (docType === 'quotation') {
+        newRow.innerHTML = `
+          <td>${rowCount}</td>
+          <td contenteditable="true">New Item</td>
+          <td contenteditable="true" class="qty">1 NOS</td>
+          <td contenteditable="true" class="rate">0</td>
+          <td contenteditable="true">-</td>
+          <td class="amount">0.00</td>
+        `;
+        tbody.appendChild(newRow);
+        calculateQuotationTotals();
+      } else {
+        newRow.innerHTML = `
+          <td>${rowCount}</td>
+          <td contenteditable="true">New Item</td>
+          <td contenteditable="true">HSN</td>
+          <td contenteditable="true" class="qty">1</td>
+          <td contenteditable="true">NOS</td>
+          <td contenteditable="true" class="rate">0</td>
+          <td class="amount">0.00</td>
+        `;
+        tbody.appendChild(newRow);
+        calculateInvoiceTotals();
+      }
       newRow.querySelectorAll('.qty, .rate').forEach(el =>
-        el.addEventListener('input', calculateTotals)
+        el.addEventListener('input', () => {
+          if (docType === 'quotation') calculateQuotationTotals();
+          else calculateInvoiceTotals();
+        })
       );
-      calculateTotals();
     }
 
     window.onload = () => {
-      document.querySelectorAll('.qty, .rate, .meta td[contenteditable]').forEach(cell =>
-        cell.addEventListener('input', calculateTotals)
-      );
-      calculateTotals();
+      toggleDocumentType();
     };
   </script>
 </body>
