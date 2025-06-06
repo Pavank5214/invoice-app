@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Invoice/Quotation - SMEC</title>
+  <title>Invoice/Quotation/BOM - SMEC</title>
   <style>
     body {
       font-family: 'Helvetica', Arial, sans-serif;
@@ -67,6 +67,11 @@
       vertical-align: middle;
     }
 
+    table td.sub-item {
+      text-align: left;
+      padding-left: 20px;
+    }
+
     table th {
       background-color: #d0d0d0;
       font-weight: bold;
@@ -105,6 +110,23 @@
 
     label.gst-toggle input {
       margin-right: 5px;
+    }
+
+    .gst-input {
+      display: flex;
+      justify-content: center;
+      margin: 10px 0;
+      font-size: 12px;
+    }
+
+    .gst-input label {
+      margin-right: 5px;
+    }
+
+    .gst-input span[contenteditable] {
+      display: inline-block;
+      width: 40px;
+      text-align: center;
     }
 
     .totals {
@@ -149,6 +171,10 @@
       width: 40%;
     }
 
+    .signature-gap {
+      height: 40px;
+    }
+
     .parties {
       display: flex;
       justify-content: space-between;
@@ -162,6 +188,20 @@
 
     .hidden {
       display: none;
+    }
+
+    .footer-text {
+      font-size: 11px;
+      margin-top: 20px;
+    }
+
+    .amount-in-words {
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .bold-lakh {
+      font-weight: bold;
     }
 
     @media print {
@@ -180,7 +220,7 @@
         margin: 10mm auto;
         padding: 10mm;
       }
-      button.add-item, button.download-pdf, select#document-type, label.gst-toggle {
+      button.add-item, button.download-pdf, select#document-type, label.gst-toggle, .gst-input {
         display: none !important;
       }
       [contenteditable="true"] {
@@ -217,22 +257,28 @@
   <select id="document-type" onchange="toggleDocumentType()">
     <option value="invoice" selected>Invoice</option>
     <option value="quotation">Quotation</option>
+    <option value="bom">Bill of Materials</option>
   </select>
+
+  <div id="gst-input" class="gst-input">
+    <label>GST Rate (%):</label>
+    <span contenteditable="true" id="gst-rate">18</span>
+  </div>
 
   <label id="gst-toggle-label" class="gst-toggle hidden">
     <input type="checkbox" id="gst-toggle" checked onchange="calculateQuotationTotals()">
-    Include GST (18%)
+    Include GST
   </label>
 
   <div class="invoice-box" id="invoice">
     <header>
-      <div class="gst-line">
+      <div id="gst-line" class="gst-line">
         <span><strong>GSTIN:</strong> 29HTKPK5803F1ZE</span>
-        <span class="copy-type">Original Copy (Buyer)</span>
+        <span id="copy-type" class="copy-type">Original Copy (Buyer)</span>
       </div>
       <h2 class="title" id="document-title">TAX INVOICE</h2>
       <h3>SRI MANJUNATHA ELECTRICAL & CONTROLS</h3>
-      <p id="company-details">
+      <p id="company-details" contenteditable="true">
         NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
         Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
       </p>
@@ -281,31 +327,31 @@
       </thead>
       <tbody>
         <tr>
-          <td>1</td>
+          <td contenteditable="true">1</td>
           <td contenteditable="true">4 POLE CONTROCTOR</td>
           <td contenteditable="true">8536</td>
           <td contenteditable="true" class="qty">1</td>
           <td contenteditable="true">NOS</td>
-          <td contenteditable="true" class="rate">13920.00</td>
-          <td class="amount">13920.00</td>
+          <td contenteditable="true" class="rate">13,920.00</td>
+          <td class="amount">13,920.00</td>
         </tr>
         <tr>
-          <td>2</td>
+          <td contenteditable="true">2</td>
           <td contenteditable="true">ON DELAY TIMER</td>
           <td contenteditable="true">8536</td>
           <td contenteditable="true" class="qty">2</td>
           <td contenteditable="true">NOS</td>
-          <td contenteditable="true" class="rate">1210.00</td>
-          <td class="amount">2420.00</td>
+          <td contenteditable="true" class="rate">1,210.00</td>
+          <td class="amount">2,420.00</td>
         </tr>
       </tbody>
     </table>
     <button class="add-item" onclick="addItem()">+ Add Item</button>
 
     <div class="totals" id="totals">
-      <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16340.00</span></p>
-      <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2941.20</span></p>
-      <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19281.20</span></h3>
+      <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16,340.00</span></p>
+      <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2,941.20</span></p>
+      <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19,281.20</span></h3>
     </div>
 
     <table class="tax-summary" id="tax-summary">
@@ -315,7 +361,7 @@
       <tbody></tbody>
     </table>
 
-    <p><strong id="amount-label">Amount in Words:</strong> <span id="amount-in-words">Rupees Nineteen Thousand Two Hundred and Eighty One and Twenty Paise Only</span></p>
+    <p id="amount-in-words-container"><span id="amount-in-words" class="amount-in-words">Rupees Nineteen Thousand Two Hundred and Eighty One and Twenty Paise Only</span></p>
 
     <div class="bank-details" id="bank-details">
       <p><strong>Bank Details</strong></p>
@@ -333,10 +379,13 @@
       </div>
       <div class="sign">
         Receiver's Signature:<br><br><br><br>
-        For SRI MANJUNATHA ELECTRICAL & CONTROLS<br>
+        <strong>For SRI MANJUNATHA ELECTRICAL & CONTROLS</strong><br>
+        <div class="signature-gap"></div>
         <strong>Authorized Signatory</strong>
       </div>
     </div>
+
+    <div id="footer-text" class="footer-text hidden"></div>
   </div>
 
   <button class="download-pdf" onclick="downloadPDF()">Download PDF</button>
@@ -345,6 +394,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const { jsPDF } = window.jspdf;
+
+    function formatNumber(num) {
+      const [integerPart, decimalPart] = num.toFixed(2).split('.');
+      const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return `${formattedInteger}.${decimalPart}`;
+    }
+
+    function parseNumber(str) {
+      if (!str) return 0;
+      return parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+    }
 
     function numberToWords(num) {
       const ones = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
@@ -360,7 +420,7 @@
         if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
         if (n < 1000) return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' and ' + convert(n % 100) : '');
         if (n < 100000) return convert(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 ? ' ' + convert(n % 1000) : '');
-        if (n < 10000000) return convert(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + convert(n % 100000) : '');
+        if (n < 10000000) return convert(Math.floor(n / 100000)) + ' <span class="bold-lakh">Lakh</span>' + (n % 100000 ? ' ' + convert(n % 100000) : '');
         return convert(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + convert(n % 10000000) : '');
       }
       
@@ -370,23 +430,25 @@
     function calculateInvoiceTotals() {
       let subtotal = 0;
       const taxRates = {};
-      const GST_RATE = 0.18;
+      let gstRate = parseFloat(document.getElementById('gst-rate').innerText) || 18;
+      gstRate = gstRate / 100;
       
       document.querySelectorAll('#items tbody tr').forEach(row => {
         let qty = row.querySelector('.qty')?.innerText.trim();
-        let rate = parseFloat(row.querySelector('.rate')?.innerText) || 0;
+        let rate = parseNumber(row.querySelector('.rate')?.innerText);
         
         qty = qty === '' || isNaN(qty) ? 1 : parseFloat(qty);
         rate = isNaN(rate) ? 0 : rate;
+        row.querySelector('.rate').innerText = formatNumber(rate);
         
         let amount = qty * rate;
-        row.querySelector('.amount').innerText = amount.toFixed(2);
+        row.querySelector('.amount').innerText = formatNumber(amount);
         subtotal += amount;
         
         let hsn = row.querySelector('td:nth-child(3)').innerText.trim();
-        if (!taxRates[hsn]) taxRates[hsn] = { taxable: 0, gst: 0, rate: GST_RATE * 100 };
+        if (!taxRates[hsn]) taxRates[hsn] = { taxable: 0, gst: 0, rate: gstRate * 100 };
         taxRates[hsn].taxable += amount;
-        taxRates[hsn].gst += amount * GST_RATE;
+        taxRates[hsn].gst += amount * gstRate;
       });
 
       const taxSummaryBody = document.querySelector('#tax-summary tbody');
@@ -397,9 +459,9 @@
         row.innerHTML = `
           <td>${hsn}</td>
           <td>${taxRates[hsn].rate}%</td>
-          <td>${taxRates[hsn].taxable.toFixed(2)}</td>
-          <td>${taxRates[hsn].gst.toFixed(2)}</td>
-          <td>${taxRates[hsn].gst.toFixed(2)}</td>
+          <td>${formatNumber(taxRates[hsn].taxable)}</td>
+          <td>${formatNumber(taxRates[hsn].gst)}</td>
+          <td>${formatNumber(taxRates[hsn].gst)}</td>
         `;
         taxSummaryBody.appendChild(row);
         totalGST += taxRates[hsn].gst;
@@ -407,47 +469,86 @@
 
       let grandTotal = subtotal + totalGST;
 
-      document.getElementById('subtotal').innerText = subtotal.toFixed(2);
-      document.getElementById('gst').innerText = totalGST.toFixed(2);
-      document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
-      document.getElementById('amount-in-words').innerText = numberToWords(grandTotal);
+      document.getElementById('subtotal').innerText = formatNumber(subtotal);
+      document.getElementById('gst').innerText = formatNumber(totalGST);
+      document.getElementById('grandTotal').innerText = formatNumber(grandTotal);
+      document.getElementById('amount-in-words').innerHTML = `<span class="amount-in-words">${numberToWords(grandTotal)}</span>`;
     }
 
     function calculateQuotationTotals() {
       let subtotal = 0;
-      const GST_RATE = 0.18;
+      const taxRates = {};
+      let gstRate = parseFloat(document.getElementById('gst-rate').innerText) || 18;
+      gstRate = gstRate / 100;
       const includeGST = document.getElementById('gst-toggle').checked;
 
       document.querySelectorAll('#items tbody tr').forEach(row => {
         let qtyText = row.querySelector('.qty')?.innerText.trim();
-        let rate = parseFloat(row.querySelector('.rate')?.innerText) || 0;
+        let rate = parseNumber(row.querySelector('.rate')?.innerText);
         
         let qty = parseFloat(qtyText.replace(/[^\d.]/g, '')) || 1;
         rate = isNaN(rate) ? 0 : rate;
+        row.querySelector('.rate').innerText = formatNumber(rate);
         
         let amount = qty * rate;
-        row.querySelector('.amount').innerText = amount.toFixed(2);
+        row.querySelector('.amount').innerText = formatNumber(amount);
         subtotal += amount;
+
+        if (includeGST) {
+          let hsn = "8536"; // Default HSN for Quotation items (can be made editable if needed)
+          if (!taxRates[hsn]) taxRates[hsn] = { taxable: 0, gst: 0, rate: gstRate * 100 };
+          taxRates[hsn].taxable += amount;
+          taxRates[hsn].gst += amount * gstRate;
+        }
       });
 
-      let totalGST = includeGST ? subtotal * GST_RATE : 0;
+      let totalGST = includeGST ? Object.values(taxRates).reduce((sum, rate) => sum + rate.gst, 0) : 0;
       let grandTotal = subtotal + totalGST;
 
       const totalsDiv = document.getElementById('totals');
       if (includeGST) {
         totalsDiv.innerHTML = `
-          <p><strong>Total:</strong> ₹ <span id="subtotal">${subtotal.toFixed(2)}</span></p>
-          <p><strong>GST @ 18%:</strong> ₹ <span id="gst">${totalGST.toFixed(2)}</span></p>
-          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${grandTotal.toFixed(2)}</span></h3>
+          <p><strong>Total:</strong> ₹ <span id="subtotal">${formatNumber(subtotal)}</span></p>
+          <p><strong>GST @ ${gstRate * 100}%:</strong> ₹ <span id="gst">${formatNumber(totalGST)}</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${formatNumber(grandTotal)}</span></h3>
         `;
       } else {
         totalsDiv.innerHTML = `
-          <p><strong>Total:</strong> ₹ <span id="subtotal">${subtotal.toFixed(2)}</span></p>
-          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${grandTotal.toFixed(2)}</span></h3>
+          <p><strong>Total:</strong> ₹ <span id="subtotal">${formatNumber(subtotal)}</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">${formatNumber(grandTotal)}</span></h3>
         `;
       }
 
-      document.getElementById('amount-in-words').innerText = numberToWords(grandTotal);
+      const taxSummaryBody = document.querySelector('#tax-summary tbody');
+      taxSummaryBody.innerHTML = '';
+      if (includeGST) {
+        for (let hsn in taxRates) {
+          let row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${hsn}</td>
+            <td>${taxRates[hsn].rate}%</td>
+            <td>${formatNumber(taxRates[hsn].taxable)}</td>
+            <td>${formatNumber(taxRates[hsn].gst)}</td>
+            <td>${formatNumber(taxRates[hsn].gst)}</td>
+          `;
+          taxSummaryBody.appendChild(row);
+        }
+      }
+
+      document.getElementById('amount-in-words').innerHTML = `<span class="amount-in-words">${numberToWords(grandTotal)}</span>`;
+    }
+
+    function attachEventListeners() {
+      const docType = document.getElementById('document-type').value;
+      document.querySelectorAll('.qty, .rate, .meta td[contenteditable], [id="company-details"], #gst-rate').forEach(el => {
+        el.removeEventListener('input', updateCalculations); // Prevent duplicate listeners
+        el.addEventListener('input', updateCalculations);
+      });
+
+      function updateCalculations() {
+        if (docType === 'quotation') calculateQuotationTotals();
+        else if (docType === 'invoice') calculateInvoiceTotals();
+      }
     }
 
     function toggleDocumentType() {
@@ -459,19 +560,60 @@
       const itemsTable = document.getElementById('items');
       const totalsDiv = document.getElementById('totals');
       const taxSummary = document.getElementById('tax-summary');
-      const amountLabel = document.getElementById('amount-label');
+      const amountInWordsContainer = document.getElementById('amount-in-words-container');
       const bankDetails = document.getElementById('bank-details');
       const termsSignDiv = document.getElementById('terms-sign');
       const companyDetails = document.getElementById('company-details');
       const gstToggleLabel = document.getElementById('gst-toggle-label');
+      const copyType = document.getElementById('copy-type');
+      const footerText = document.getElementById('footer-text');
+      const addItemButton = document.querySelector('.add-item');
+      const gstLine = document.getElementById('gst-line');
+      const gstInput = document.getElementById('gst-input');
 
-      if (docType === 'quotation') {
+      if (docType === 'bom') {
+        title.innerText = 'BILL OF MATERIALS';
+        companyDetails.innerHTML = `
+          (Mfg All Type Power Switch Boards, Control Panels & Bus ducts)<br>
+          No.19, 3rd Main Road, Kasturba Nagar, Near Mysore Road Tollgate, Bangalore - 560026<br>
+          Mob: 9535982016 | E-mail: srimanjunathaelectricalcontrol@gmail.com
+        `;
+        gstLine.classList.add('hidden');
+        metaTable.innerHTML = `
+          <tr>
+            <th contenteditable="true">SMEC/25-26/BOM-006</th>
+            <td contenteditable="true">May 06, 2025</td>
+          </tr>
+        `;
+        partiesDiv.classList.add('hidden');
+        priceOfferHeader.classList.add('hidden');
+        itemsTable.querySelector('thead tr').innerHTML = '<th>S.No</th><th>Description</th><th>Qty</th><th>Make</th>';
+        itemsTable.querySelector('tbody').innerHTML = `
+          <tr>
+            <td contenteditable="true">1</td>
+            <td contenteditable="true">METERING PANEL</td>
+            <td contenteditable="true" class="qty">1 NOS</td>
+            <td contenteditable="true">-</td>
+          </tr>
+        `;
+        totalsDiv.classList.add('hidden');
+        taxSummary.classList.add('hidden');
+        amountInWordsContainer.classList.add('hidden');
+        bankDetails.classList.add('hidden');
+        termsSignDiv.classList.add('hidden');
+        gstToggleLabel.classList.add('hidden');
+        addItemButton.classList.remove('hidden');
+        footerText.classList.remove('hidden');
+        footerText.innerHTML = '<p contenteditable="true">Thanking You,</p>';
+        gstInput.classList.add('hidden');
+      } else if (docType === 'quotation') {
         title.innerText = 'QUOTATION';
         companyDetails.innerHTML = `
           (Mfg All Type Power Switch Boards, Control Panels & Bus ducts)<br>
           No.9, 3rd Main Road, Kasturba Nagar, Near Mysore Road Tollgate, BENGALURU - 560026<br>
           Email: srimanjunathaelectricalcontrol@gmail.com | Ph No: 9535982016
         `;
+        gstLine.classList.add('hidden');
         metaTable.innerHTML = `
           <tr>
             <th>Quotation No.</th>
@@ -487,38 +629,40 @@
         itemsTable.querySelector('thead tr').innerHTML = '<th>Sl No</th><th>Description</th><th>Qty Nos</th><th>Price (Rs)</th><th>Make</th><th>Total</th>';
         itemsTable.querySelector('tbody').innerHTML = `
           <tr>
-            <td>1</td>
+            <td contenteditable="true">1</td>
             <td contenteditable="true">ATS PANEL</td>
             <td contenteditable="true" class="qty">1 NOS</td>
-            <td contenteditable="true" class="rate">96800.00</td>
+            <td contenteditable="true" class="rate">96,800.00</td>
             <td contenteditable="true">-</td>
-            <td class="amount">96800.00</td>
+            <td class="amount">96,800.00</td>
           </tr>
           <tr>
-            <td>2</td>
+            <td contenteditable="true">2</td>
             <td contenteditable="true">AMF PANEL</td>
             <td contenteditable="true" class="qty">1 NOS</td>
-            <td contenteditable="true" class="rate">101000.00</td>
+            <td contenteditable="true" class="rate">1,01,000.00</td>
             <td contenteditable="true">-</td>
-            <td class="amount">101000.00</td>
+            <td class="amount">1,01,000.00</td>
           </tr>
           <tr>
-            <td>3</td>
+            <td contenteditable="true">3</td>
             <td contenteditable="true">DISTRIBUTION PANEL</td>
             <td contenteditable="true" class="qty">1 NOS</td>
-            <td contenteditable="true" class="rate">49500.00</td>
+            <td contenteditable="true" class="rate">49,500.00</td>
             <td contenteditable="true">-</td>
-            <td class="amount">49500.00</td>
+            <td class="amount">49,500.00</td>
           </tr>
         `;
+        totalsDiv.classList.remove('hidden');
         totalsDiv.innerHTML = `
-          <p><strong>Total:</strong> ₹ <span id="subtotal">247300.00</span></p>
-          <p><strong>GST @ 18%:</strong> ₹ <span id="gst">44514.00</span></p>
-          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">291814.00</span></h3>
+          <p><strong>Total:</strong> ₹ <span id="subtotal">2,47,300.00</span></p>
+          <p><strong>GST @ 18%:</strong> ₹ <span id="gst">44,514.00</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">2,91,814.00</span></h3>
         `;
-        taxSummary.classList.add('hidden');
-        amountLabel.innerText = 'Estimated Amount in Words:';
+        taxSummary.classList.remove('hidden');
+        amountInWordsContainer.classList.remove('hidden');
         bankDetails.classList.add('hidden');
+        termsSignDiv.classList.remove('hidden');
         termsSignDiv.innerHTML = `
           <div class="terms">
             <strong>Note: (II) TERMS & CONDITIONS</strong>
@@ -530,16 +674,20 @@
             a) GST @ 18% Includes.<br>
             e. Validity: 15 days from today & thereafter subject to our confirmation.<br>
             We hope you will find our offer acceptable and we look forward to the pleasure of receiving your valued order, which we assure you will receive our best & prompt attention.<br>
-            Thanking You, Sincerely Yours,
+            <strong>Thanking You, Sincerely Yours,</strong><br>
+            <strong>For SRI MANJUNATHA ELECTRICAL & CONTROLS</strong>
             </p>
           </div>
           <div class="sign">
-            For SRI MANJUNATHA ELECTRICAL & CONTROLS<br><br>
+            <div class="signature-gap"></div>
             <strong contenteditable="true">SHIVAKUMAR</strong><br>
             <span contenteditable="true">9535982016</span>
           </div>
         `;
         gstToggleLabel.classList.remove('hidden');
+        addItemButton.classList.remove('hidden');
+        footerText.classList.add('hidden');
+        gstInput.classList.remove('hidden');
         calculateQuotationTotals();
       } else {
         title.innerText = 'TAX INVOICE';
@@ -547,6 +695,7 @@
           NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
           Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
         `;
+        gstLine.classList.remove('hidden');
         metaTable.innerHTML = `
           <tr>
             <th>Invoice No.</th>
@@ -563,32 +712,34 @@
         itemsTable.querySelector('thead tr').innerHTML = '<th>S.N.</th><th>Description of Goods</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Price</th><th>Amount</th>';
         itemsTable.querySelector('tbody').innerHTML = `
           <tr>
-            <td>1</td>
+            <td contenteditable="true">1</td>
             <td contenteditable="true">4 POLE CONTROCTOR</td>
             <td contenteditable="true">8536</td>
             <td contenteditable="true" class="qty">1</td>
             <td contenteditable="true">NOS</td>
-            <td contenteditable="true" class="rate">13920.00</td>
-            <td class="amount">13920.00</td>
+            <td contenteditable="true" class="rate">13,920.00</td>
+            <td class="amount">13,920.00</td>
           </tr>
           <tr>
-            <td>2</td>
+            <td contenteditable="true">2</td>
             <td contenteditable="true">ON DELAY TIMER</td>
             <td contenteditable="true">8536</td>
             <td contenteditable="true" class="qty">2</td>
             <td contenteditable="true">NOS</td>
-            <td contenteditable="true" class="rate">1210.00</td>
-            <td class="amount">2420.00</td>
+            <td contenteditable="true" class="rate">1,210.00</td>
+            <td class="amount">2,420.00</td>
           </tr>
         `;
+        totalsDiv.classList.remove('hidden');
         totalsDiv.innerHTML = `
-          <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16340.00</span></p>
-          <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2941.20</span></p>
-          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19281.20</span></h3>
+          <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16,340.00</span></p>
+          <p><strong>Total GST (18%):</strong> ₹ <span id="gst">2,941.20</span></p>
+          <h3><strong>Grand Total:</strong> ₹ <span id="grandTotal">19,281.20</span></h3>
         `;
         taxSummary.classList.remove('hidden');
-        amountLabel.innerText = 'Amount in Words:';
+        amountInWordsContainer.classList.remove('hidden');
         bankDetails.classList.remove('hidden');
+        termsSignDiv.classList.remove('hidden');
         termsSignDiv.innerHTML = `
           <div class="terms">
             <strong>Terms & Conditions</strong>
@@ -598,29 +749,28 @@
           </div>
           <div class="sign">
             Receiver's Signature:<br><br><br><br>
-            For SRI MANJUNATHA ELECTRICAL & CONTROLS<br>
+            <strong>For SRI MANJUNATHA ELECTRICAL & CONTROLS</strong><br>
+            <div class="signature-gap"></div>
             <strong>Authorized Signatory</strong>
           </div>
         `;
         gstToggleLabel.classList.add('hidden');
+        addItemButton.classList.remove('hidden');
+        footerText.classList.add('hidden');
+        gstInput.classList.remove('hidden');
         calculateInvoiceTotals();
       }
-      document.querySelectorAll('.qty, .rate, .meta td[contenteditable]').forEach(cell =>
-        cell.addEventListener('input', () => {
-          if (docType === 'quotation') calculateQuotationTotals();
-          else calculateInvoiceTotals();
-        })
-      );
+      attachEventListeners();
     }
 
     function downloadPDF() {
       const docType = document.getElementById('document-type').value;
       if (docType === 'quotation') calculateQuotationTotals();
-      else calculateInvoiceTotals();
+      else if (docType === 'invoice') calculateInvoiceTotals();
       
       const element = document.getElementById('invoice').cloneNode(true);
       
-      element.querySelectorAll('.add-item, .download-pdf, #document-type, #gst-toggle-label').forEach(el => el.remove());
+      element.querySelectorAll('.add-item, .download-pdf, #document-type, #gst-toggle-label, #gst-input').forEach(el => el.remove());
       element.querySelectorAll('[contenteditable="true"]').forEach(el => {
         el.removeAttribute('contenteditable');
         el.style.border = 'none';
@@ -632,7 +782,7 @@
         el.style.border = '1.5px solid #333';
       });
 
-      const filename = docType === 'invoice' ? 'invoice.pdf' : 'quotation.pdf';
+      const filename = docType === 'invoice' ? 'invoice.pdf' : docType === 'quotation' ? 'quotation.pdf' : 'bom.pdf';
 
       const tempContainer = document.createElement('div');
       tempContainer.style.position = 'absolute';
@@ -674,36 +824,39 @@
       const rowCount = tbody.rows.length + 1;
       const docType = document.getElementById('document-type').value;
       const newRow = document.createElement('tr');
-      if (docType === 'quotation') {
+      if (docType === 'bom') {
         newRow.innerHTML = `
-          <td>${rowCount}</td>
+          <td contenteditable="true">${rowCount}</td>
+          <td contenteditable="true">New Material</td>
+          <td contenteditable="true" class="qty">1 NOS</td>
+          <td contenteditable="true">-</td>
+        `;
+        tbody.appendChild(newRow);
+      } else if (docType === 'quotation') {
+        newRow.innerHTML = `
+          <td contenteditable="true">${rowCount}</td>
           <td contenteditable="true">New Item</td>
           <td contenteditable="true" class="qty">1 NOS</td>
-          <td contenteditable="true" class="rate">0</td>
+          <td contenteditable="true" class="rate">0.00</td>
           <td contenteditable="true">-</td>
           <td class="amount">0.00</td>
         `;
         tbody.appendChild(newRow);
         calculateQuotationTotals();
-      } else {
+      } else if (docType === 'invoice') {
         newRow.innerHTML = `
-          <td>${rowCount}</td>
+          <td contenteditable="true">${rowCount}</td>
           <td contenteditable="true">New Item</td>
           <td contenteditable="true">HSN</td>
           <td contenteditable="true" class="qty">1</td>
           <td contenteditable="true">NOS</td>
-          <td contenteditable="true" class="rate">0</td>
+          <td contenteditable="true" class="rate">0.00</td>
           <td class="amount">0.00</td>
         `;
         tbody.appendChild(newRow);
         calculateInvoiceTotals();
       }
-      newRow.querySelectorAll('.qty, .rate').forEach(el =>
-        el.addEventListener('input', () => {
-          if (docType === 'quotation') calculateQuotationTotals();
-          else calculateInvoiceTotals();
-        })
-      );
+      attachEventListeners();
     }
 
     window.onload = () => {
