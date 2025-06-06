@@ -47,6 +47,10 @@
       color: #000;
     }
 
+    header h3.red-header {
+      color: red !important;
+    }
+
     header p {
       font-size: 11px;
       color: #000;
@@ -91,7 +95,7 @@
       background: #f0f0f0;
     }
 
-    button.add-item, button.download-pdf, select#document-type, label.gst-toggle {
+    button.add-item, button.download-pdf, select#document-type, label.gst-toggle, button.toggle-red, button.toggle-yellow, button.toggle-meta-yellow {
       display: block;
       margin: 10px auto;
       padding: 8px 16px;
@@ -104,7 +108,7 @@
       text-align: center;
     }
 
-    button.add-item:hover, button.download-pdf:hover, select#document-type:hover {
+    button.add-item:hover, button.download-pdf:hover, select#document-type:hover, button.toggle-red:hover, button.toggle-yellow:hover, button.toggle-meta-yellow:hover {
       background: #555;
     }
 
@@ -146,9 +150,9 @@
     .bank-details {
       margin: 15px 0;
       font-size: 11px;
-      border: 1.5px solid #333;
+      
       padding: 8px;
-      background: #f0f0f0;
+     
     }
 
     .bank-details p {
@@ -173,6 +177,9 @@
 
     .signature-gap {
       height: 40px;
+    }
+    .signature-gap1 {
+      height: 160px;
     }
 
     .parties {
@@ -204,6 +211,32 @@
       font-weight: bold;
     }
 
+    /* New Styles for BOM Options */
+    .red-text {
+      color: red !important;
+    }
+
+    .yellow-box {
+      background-color: yellow !important;
+    }
+
+    .selected-cell {
+      border: 2px solid #007bff !important;
+    }
+
+    .meta-yellow {
+      background-color: yellow !important;
+    }
+
+    /* Quotation-specific styles */
+    .meta-subject {
+      font-size: 12px !important; /* Increased size for SUB: QUOTATION FOR METERING PANEL */
+    }
+
+    .price-offer-large {
+      font-size: 10px !important; /* Increased size for (I) Price Offer */
+    }
+
     @media print {
       body {
         padding: 0;
@@ -220,7 +253,7 @@
         margin: 10mm auto;
         padding: 10mm;
       }
-      button.add-item, button.download-pdf, select#document-type, label.gst-toggle, .gst-input {
+      button.add-item, button.download-pdf, select#document-type, label.gst-toggle, .gst-input, button.toggle-red, button.toggle-yellow, button.toggle-meta-yellow {
         display: none !important;
       }
       [contenteditable="true"] {
@@ -244,11 +277,17 @@
       header h2, header h3, header p, .totals p, .totals h3, .terms-sign, .bank-details p, .party span {
         color: #000 !important;
       }
+      header h3.red-header {
+        color: red !important;
+      }
       table th {
         background-color: #d0d0d0 !important;
       }
       .bank-details {
         background: #f0f0f0 !important;
+      }
+      .selected-cell {
+        border: 1.5px solid #333 !important; /* Reset border for printing */
       }
     }
   </style>
@@ -277,7 +316,7 @@
         <span id="copy-type" class="copy-type">Original Copy (Buyer)</span>
       </div>
       <h2 class="title" id="document-title">TAX INVOICE</h2>
-      <h3>SRI MANJUNATHA ELECTRICAL & CONTROLS</h3>
+      <h3 id="company-name">SRI MANJUNATHA ELECTRICAL & CONTROLS</h3>
       <p id="company-details" contenteditable="true">
         NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
         Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
@@ -295,6 +334,7 @@
       <tr><th>Place of Supply</th><td contenteditable="true">BANGALORE</td><th>Station</th><td contenteditable="true">-</td></tr>
       <tr><th>Reverse Charge</th><td contenteditable="true">N</td><td></td><td></td></tr>
     </table>
+    <button class="toggle-meta-yellow hidden" id="toggle-meta-yellow" onclick="toggleMetaYellow()">Toggle Meta Yellow Background</button>
 
     <div class="parties" id="parties">
       <div class="party">
@@ -347,6 +387,8 @@
       </tbody>
     </table>
     <button class="add-item" onclick="addItem()">+ Add Item</button>
+    <button class="toggle-red hidden" id="toggle-red" onclick="toggleRedText()">Toggle Red Text</button>
+    <button class="toggle-yellow hidden" id="toggle-yellow" onclick="toggleYellowBox()">Toggle Yellow Box</button>
 
     <div class="totals" id="totals">
       <p><strong>Subtotal:</strong> ₹ <span id="subtotal">16,340.00</span></p>
@@ -394,6 +436,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     const { jsPDF } = window.jspdf;
+    let selectedCell = null;
 
     function formatNumber(num) {
       const [integerPart, decimalPart] = num.toFixed(2).split('.');
@@ -549,6 +592,47 @@
         if (docType === 'quotation') calculateQuotationTotals();
         else if (docType === 'invoice') calculateInvoiceTotals();
       }
+
+      // Add click event listeners for BOM table cells
+      if (docType === 'bom') {
+        document.querySelectorAll('#items tbody td').forEach(cell => {
+          cell.removeEventListener('click', handleCellClick); // Prevent duplicate listeners
+          cell.addEventListener('click', handleCellClick);
+        });
+      }
+    }
+
+    function handleCellClick(event) {
+      const docType = document.getElementById('document-type').value;
+      if (docType !== 'bom') return; // Only handle in BOM mode
+
+      // Remove 'selected-cell' class from previously selected cell
+      if (selectedCell) {
+        selectedCell.classList.remove('selected-cell');
+      }
+
+      // Set the new selected cell
+      selectedCell = event.target;
+      selectedCell.classList.add('selected-cell');
+    }
+
+    function toggleRedText() {
+      if (selectedCell) {
+        selectedCell.classList.toggle('red-text');
+      }
+    }
+
+    function toggleYellowBox() {
+      if (selectedCell) {
+        selectedCell.classList.toggle('yellow-box');
+      }
+    }
+
+    function toggleMetaYellow() {
+      const metaRow = document.querySelector('#meta tr');
+      if (metaRow) {
+        metaRow.classList.toggle('meta-yellow');
+      }
     }
 
     function toggleDocumentType() {
@@ -564,15 +648,30 @@
       const bankDetails = document.getElementById('bank-details');
       const termsSignDiv = document.getElementById('terms-sign');
       const companyDetails = document.getElementById('company-details');
+      const companyName = document.getElementById('company-name');
       const gstToggleLabel = document.getElementById('gst-toggle-label');
       const copyType = document.getElementById('copy-type');
       const footerText = document.getElementById('footer-text');
       const addItemButton = document.querySelector('.add-item');
+      const toggleRedButton = document.getElementById('toggle-red');
+      const toggleYellowButton = document.getElementById('toggle-yellow');
+      const toggleMetaYellowButton = document.getElementById('toggle-meta-yellow');
       const gstLine = document.getElementById('gst-line');
       const gstInput = document.getElementById('gst-input');
 
+      // Reset selected cell and meta yellow background when switching modes
+      if (selectedCell) {
+        selectedCell.classList.remove('selected-cell');
+        selectedCell = null;
+      }
+      const metaRow = document.querySelector('#meta tr');
+      if (metaRow) {
+        metaRow.classList.remove('meta-yellow');
+      }
+
       if (docType === 'bom') {
         title.innerText = 'BILL OF MATERIALS';
+        companyName.classList.add('red-header'); // Make SRI MANJUNATHA ELECTRICAL & CONTROLS red
         companyDetails.innerHTML = `
           (Mfg All Type Power Switch Boards, Control Panels & Bus ducts)<br>
           No.19, 3rd Main Road, Kasturba Nagar, Near Mysore Road Tollgate, Bangalore - 560026<br>
@@ -603,11 +702,15 @@
         termsSignDiv.classList.add('hidden');
         gstToggleLabel.classList.add('hidden');
         addItemButton.classList.remove('hidden');
+        toggleRedButton.classList.remove('hidden');
+        toggleYellowButton.classList.remove('hidden');
+        toggleMetaYellowButton.classList.remove('hidden'); // Show Toggle Meta Yellow Background button
         footerText.classList.remove('hidden');
         footerText.innerHTML = '<p contenteditable="true">Thanking You,</p>';
         gstInput.classList.add('hidden');
       } else if (docType === 'quotation') {
         title.innerText = 'QUOTATION';
+        companyName.classList.remove('red-header');
         companyDetails.innerHTML = `
           (Mfg All Type Power Switch Boards, Control Panels & Bus ducts)<br>
           No.9, 3rd Main Road, Kasturba Nagar, Near Mysore Road Tollgate, BENGALURU - 560026<br>
@@ -622,10 +725,11 @@
             <td contenteditable="true">01.06.2025</td>
           </tr>
           <tr><th>Customer Name</th><td contenteditable="true">ELECTRIC TECH</td><th>Client Name</th><td contenteditable="true">R J JEWELLERS (NAMBIER)</td></tr>
-          <tr><th colspan="4" style="text-align: left; padding-left: 10px;" contenteditable="true">Dear Sir,<br>SUB: QUOTATION FOR METERING PANEL<br>We thank you for your enquiry and we have pleasure in submitting our offer towards above mentioned subject which requires your approval.</th></tr>
+          <tr><th colspan="4" class="meta-subject" style="text-align: left; padding-left: 10px;" contenteditable="true">Dear Sir,<br>SUB: QUOTATION FOR METERING PANEL<br>We thank you for your enquiry and we have pleasure in submitting our offer towards above mentioned subject which requires your approval.</th></tr>
         `;
         partiesDiv.classList.add('hidden');
         priceOfferHeader.classList.remove('hidden');
+        priceOfferHeader.classList.add('price-offer-large'); // Increase font size of Price Offer
         itemsTable.querySelector('thead tr').innerHTML = '<th>Sl No</th><th>Description</th><th>Qty Nos</th><th>Price (Rs)</th><th>Make</th><th>Total</th>';
         itemsTable.querySelector('tbody').innerHTML = `
           <tr>
@@ -675,22 +779,27 @@
             e. Validity: 15 days from today & thereafter subject to our confirmation.<br>
             We hope you will find our offer acceptable and we look forward to the pleasure of receiving your valued order, which we assure you will receive our best & prompt attention.<br>
             <strong>Thanking You, Sincerely Yours,</strong><br>
-            <strong>For SRI MANJUNATHA ELECTRICAL & CONTROLS</strong>
+            <strong>For SRI MANJUNATHA ELECTRICAL & CONTROLS - </strong>
             </p>
           </div>
           <div class="sign">
-            <div class="signature-gap"></div>
-            <strong contenteditable="true">SHIVAKUMAR</strong><br>
+            <div class="signature-gap1"></div>
+            <strong contenteditable="true">
+              SHIVAKUMAR</strong><br>
             <span contenteditable="true">9535982016</span>
           </div>
         `;
         gstToggleLabel.classList.remove('hidden');
         addItemButton.classList.remove('hidden');
+        toggleRedButton.classList.add('hidden');
+        toggleYellowButton.classList.add('hidden');
+        toggleMetaYellowButton.classList.add('hidden');
         footerText.classList.add('hidden');
         gstInput.classList.remove('hidden');
         calculateQuotationTotals();
       } else {
         title.innerText = 'TAX INVOICE';
+        companyName.classList.remove('red-header');
         companyDetails.innerHTML = `
           NO 19, 3RD MAIN ROAD, KASTURBANAGAR, NEAR MYSORE ROAD TOLLGATE, BENGALURU - 560026<br>
           Email: srimanjunathaelectricalcontrol@gmail.com | Phone: 9535982016
@@ -709,6 +818,7 @@
         `;
         partiesDiv.classList.remove('hidden');
         priceOfferHeader.classList.add('hidden');
+        priceOfferHeader.classList.remove('price-offer-large');
         itemsTable.querySelector('thead tr').innerHTML = '<th>S.N.</th><th>Description of Goods</th><th>HSN/SAC</th><th>Qty</th><th>Unit</th><th>Price</th><th>Amount</th>';
         itemsTable.querySelector('tbody').innerHTML = `
           <tr>
@@ -756,6 +866,9 @@
         `;
         gstToggleLabel.classList.add('hidden');
         addItemButton.classList.remove('hidden');
+        toggleRedButton.classList.add('hidden');
+        toggleYellowButton.classList.add('hidden');
+        toggleMetaYellowButton.classList.add('hidden');
         footerText.classList.add('hidden');
         gstInput.classList.remove('hidden');
         calculateInvoiceTotals();
@@ -770,7 +883,7 @@
       
       const element = document.getElementById('invoice').cloneNode(true);
       
-      element.querySelectorAll('.add-item, .download-pdf, #document-type, #gst-toggle-label, #gst-input').forEach(el => el.remove());
+      element.querySelectorAll('.add-item, .download-pdf, #document-type, #gst-toggle-label, #gst-input, #toggle-red, #toggle-yellow, #toggle-meta-yellow').forEach(el => el.remove());
       element.querySelectorAll('[contenteditable="true"]').forEach(el => {
         el.removeAttribute('contenteditable');
         el.style.border = 'none';
